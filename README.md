@@ -24,4 +24,4 @@ A Unity project for AR wall segmentation and painting using Unity Sentis for mac
 
 ## License
 
-This project is proprietary and confidential. 
+This project is proprietary and confidential.
