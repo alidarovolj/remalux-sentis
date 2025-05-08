@@ -1,7 +1,11 @@
 using UnityEngine;
+#if UNITY_AR_FOUNDATION_PRESENT
 using UnityEngine.XR.ARFoundation;
+#endif
 using UnityEngine.UI;
+#if UNITY_XR_CORE_UTILS_PRESENT
 using Unity.XR.CoreUtils;
+#endif
 using System.Collections;
 using System.Reflection;
 using DuluxVisualizer;
@@ -12,10 +16,25 @@ using DuluxVisualizer;
 public class SentisWallSegmentationDemo : MonoBehaviour
 {
       [Header("AR Components")]
-      public ARSession arSession;
-      public XROrigin xrOrigin;
-      public ARCameraManager cameraManager;
-      public ARPlaneManager planeManager;
+#if UNITY_AR_FOUNDATION_PRESENT
+      public UnityEngine.XR.ARFoundation.ARSession arSession;
+#else
+      public DuluxVisualizer.ARSession arSession;
+#endif
+
+#if UNITY_XR_CORE_UTILS_PRESENT
+      public Unity.XR.CoreUtils.XROrigin xrOrigin;
+#else
+      public GameObject xrOrigin;
+#endif
+
+#if UNITY_AR_FOUNDATION_PRESENT
+      public UnityEngine.XR.ARFoundation.ARCameraManager cameraManager;
+      public UnityEngine.XR.ARFoundation.ARPlaneManager planeManager;
+#else
+      public DuluxVisualizer.ARCameraManager cameraManager;
+      public DuluxVisualizer.ARPlaneManager planeManager;
+#endif
 
       [Header("Segmentation")]
       public SentisWallSegmentation wallSegmentation;
@@ -43,24 +62,43 @@ public class SentisWallSegmentationDemo : MonoBehaviour
       private void SetupARComponents()
       {
             // Находим компоненты, если они не назначены
+#if UNITY_AR_FOUNDATION_PRESENT
             if (arSession == null)
-                  arSession = FindObjectOfType<ARSession>();
+                  arSession = FindObjectOfType<UnityEngine.XR.ARFoundation.ARSession>();
+#else
+            if (arSession == null)
+                  arSession = FindObjectOfType<DuluxVisualizer.ARSession>();
+#endif
 
+#if UNITY_XR_CORE_UTILS_PRESENT
             if (xrOrigin == null)
-                  xrOrigin = FindObjectOfType<XROrigin>();
+                  xrOrigin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+#else
+            if (xrOrigin == null)
+                  xrOrigin = FindObjectOfType<GameObject>();
+#endif
 
+#if UNITY_AR_FOUNDATION_PRESENT
             if (cameraManager == null)
-                  cameraManager = FindObjectOfType<ARCameraManager>();
+                  cameraManager = FindObjectOfType<UnityEngine.XR.ARFoundation.ARCameraManager>();
 
             if (planeManager == null)
-                  planeManager = FindObjectOfType<ARPlaneManager>();
+                  planeManager = FindObjectOfType<UnityEngine.XR.ARFoundation.ARPlaneManager>();
 
             // Настраиваем распознавание вертикальных поверхностей (стен)
             if (planeManager != null)
             {
                   // Use extension method to set vertical detection mode
-                  planeManager.SetVerticalDetectionMode();
+                  // Comment out this line as SetVerticalDetectionMode is not available
+                  // planeManager.SetVerticalDetectionMode();
             }
+#else
+            if (cameraManager == null)
+                  cameraManager = FindObjectOfType<DuluxVisualizer.ARCameraManager>();
+
+            if (planeManager == null)
+                  planeManager = FindObjectOfType<DuluxVisualizer.ARPlaneManager>();
+#endif
       }
 
       private void SetupSegmentation()

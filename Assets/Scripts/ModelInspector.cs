@@ -1,124 +1,106 @@
 using System.IO;
 using UnityEngine;
-using Unity.Barracuda;
-// Unity.Barracuda.ONNX is now provided by our compatibility layer
 using System.Linq;
+using DuluxVisualizer; // Use our compatibility namespace instead of Unity.Sentis
 
 /// <summary>
 /// Инструмент для анализа ONNX-моделей и инспекции их входных и выходных тензоров
 /// </summary>
 public class ModelInspector : MonoBehaviour
 {
-    [Header("Model Source")]
-    [SerializeField] private NNModel modelAsset;
-    [SerializeField] private string modelPath = "Assets/Models/model.onnx";
+      [Header("Model Source")]
+      [SerializeField] private DuluxVisualizer.ModelAsset modelAsset;
+      [SerializeField] private string modelPath = "Assets/StreamingAssets/Models/model.onnx";
 
-    [Header("Debug Options")]
-    [SerializeField] private bool logOnStart = true; // Выводить информацию при запуске
-    [SerializeField] private bool logTensorShapes = true; // Выводить формы тензоров
+      [Header("Debug Options")]
+      [SerializeField] private bool logOnStart = true; // Выводить информацию при запуске
+      [SerializeField] private bool logTensorShapes = true; // Выводить формы тензоров
 
-    void Start()
-    {
-        if (logOnStart)
-        {
-            InspectModel();
-        }
-    }
+      void Start()
+      {
+            if (logOnStart)
+            {
+                  InspectModel();
+            }
+      }
 
-    public void InspectModel()
-    {
-        Model model = null;
+      public void InspectModel()
+      {
+            DuluxVisualizer.ModelAsset model = modelAsset;
 
-        // Пробуем загрузить модель из пути напрямую
-        try
-        {
-            var converter = new Unity.Barracuda.ONNX.ONNXModelConverter(
-                optimizeModel: true,
-                treatErrorsAsWarnings: true,
-                forceArbitraryBatchSize: true);
+            // Пробуем загрузить модель из пути напрямую
+            try
+            {
+                  if (File.Exists(modelPath))
+                  {
+                        // Use our compatibility layer's reflection-based loading
+                        model = DuluxVisualizer.SentisShim.LoadModel(modelPath);
+                        Debug.Log("Модель загружена из файла: " + modelPath);
+                  }
+                  else
+                  {
+                        Debug.LogError($"Файл модели не найден по пути: {modelPath}");
 
-            byte[] onnxBytes = System.IO.File.ReadAllBytes(modelPath);
-            model = converter.Convert(onnxBytes);
-            Debug.Log("Модель загружена из файла: " + modelPath);
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("Ошибка при загрузке модели: " + e.Message);
+                        // Попробуем также искать в Application.streamingAssetsPath во время выполнения
+                        string runtimePath = Path.Combine(Application.streamingAssetsPath, "Models/model.onnx");
+                        if (File.Exists(runtimePath))
+                        {
+                              model = DuluxVisualizer.SentisShim.LoadModel(runtimePath);
+                              Debug.Log("Модель загружена из StreamingAssets: " + runtimePath);
+                        }
+                        else
+                        {
+                              Debug.LogError($"Файл модели не найден и в StreamingAssets: {runtimePath}");
+                        }
+                  }
+            }
+            catch (System.Exception e)
+            {
+                  Debug.LogError("Ошибка при загрузке модели из файла: " + e.Message);
+            }
 
             // Если не удалось загрузить из файла, пробуем использовать сериализованную модель
-            if (modelAsset != null)
+            if (model == null && modelAsset != null)
             {
-                model = ModelLoader.Load(modelAsset);
-                Debug.Log("Модель загружена из сериализованного ассета");
+                  model = modelAsset;
+                  Debug.Log("Модель загружена из сериализованного ассета");
             }
-            else
+            else if (model == null)
             {
-                Debug.LogError("Не удалось загрузить модель ни из файла, ни из ассета");
-                return;
+                  Debug.LogError("Не удалось загрузить модель ни из файла, ни из ассета");
+                  return;
             }
-        }
 
-        if (model == null)
-        {
-            Debug.LogError("Модель не загружена");
-            return;
-        }
+            // Выводим общую информацию о модели
+            Debug.Log("=== Информация о модели ===");
+            Debug.Log($"Имя: {model.name}");
+            Debug.Log($"Всего входов: {model.inputs.Count}");
+            Debug.Log($"Всего выходов: {model.outputs.Count}");
 
-        // Выводим общую информацию о модели
-        Debug.Log("=== Информация о модели ===");
-        Debug.Log($"Память (байт): {model.GetTensorByName("?").length * sizeof(float)}");
-        Debug.Log($"Всего слоев: {model.layers.Count}");
-        Debug.Log($"Всего входов: {model.inputs.Count}");
-        Debug.Log($"Всего выходов: {model.outputs.Count}");
-
-        // Выводим информацию о входах
-        Debug.Log("\n=== Входы модели ===");
-        foreach (var input in model.inputs)
-        {
-            Debug.Log($"Имя: {input.name}");
-            Debug.Log($"Форма: {string.Join(",", input.shape)}");
-        }
-
-        // Выводим информацию о выходах
-        Debug.Log("\n=== Выходы модели ===");
-        foreach (var output in model.outputs)
-        {
-            Debug.Log($"Имя: {output}");
-
-            // Ищем слой, соответствующий выходу
-            foreach (var layer in model.layers)
+            // Выводим информацию о входах
+            Debug.Log("\n=== Входы модели ===");
+            foreach (var input in model.inputs)
             {
-                if (layer.name == output)
-                {
-                    Debug.Log($"Тип выходного слоя: {layer.type}");
-                    break;
-                }
+                  Debug.Log($"Имя: {input.name}");
+                  Debug.Log($"Форма: {string.Join(",", input.shape)}");
+                  Debug.Log($"Тип данных: {input.dataType}");
             }
-        }
 
-        // Выводим информацию о первых 10 слоях
-        Debug.Log("\n=== Слои модели (первые 10) ===");
-        for (int i = 0; i < Mathf.Min(10, model.layers.Count); i++)
-        {
-            var layer = model.layers[i];
-            Debug.Log($"Слой {i}: {layer.name}, Тип: {layer.type}");
-            Debug.Log($"  Входы: {string.Join(", ", layer.inputs)}");
-            Debug.Log($"  Выходы: {(layer.outputs != null ? layer.outputs.Length.ToString() : "0")} тензоров");
-        }
+            // Выводим информацию о выходах
+            Debug.Log("\n=== Выходы модели ===");
+            foreach (var output in model.outputs)
+            {
+                  Debug.Log($"Имя: {output}");
+            }
 
-        if (model.layers.Count > 10)
-        {
-            Debug.Log($"...и еще {model.layers.Count - 10} слоев...");
-        }
+            Debug.Log("Инспекция модели завершена!");
+      }
 
-        Debug.Log("Инспекция модели завершена!");
-    }
-
-    /// <summary>
-    /// Запускает инспекцию модели из кода
-    /// </summary>
-    public void InspectModelFromButton()
-    {
-        InspectModel();
-    }
+      /// <summary>
+      /// Запускает инспекцию модели из кода
+      /// </summary>
+      public void InspectModelFromButton()
+      {
+            InspectModel();
+      }
 }

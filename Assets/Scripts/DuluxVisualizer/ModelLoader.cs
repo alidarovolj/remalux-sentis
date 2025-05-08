@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
 using System;
 using System.IO;
 
@@ -18,9 +20,15 @@ namespace DuluxVisualizer
             [SerializeField] private int _inputWidth = 128;
             [SerializeField] private int _inputHeight = 128;
 
+#if UNITY_SENTIS
             private Model _runtimeModel;
             private Worker _engine;
             private BackendType _inferenceDevice = BackendType.CPU;
+#else
+            private ScriptableObject _runtimeModel;
+            private object _engine;
+            private object _inferenceDevice;
+#endif
             private bool _isModelReady = false;
 
             public bool IsModelReady => _isModelReady;
@@ -130,7 +138,8 @@ namespace DuluxVisualizer
             /// <summary>
             /// Выполняет инференс модели с заданным тензором входа
             /// </summary>
-            public Tensor<float> Execute(Tensor<float> inputTensor)
+#if UNITY_SENTIS
+            public Tensor Execute(Tensor inputTensor)
             {
                   if (!_isModelReady || _engine == null)
                   {
@@ -144,7 +153,7 @@ namespace DuluxVisualizer
                         _engine.Schedule(inputTensor);
 
                         // Получаем результат
-                        Tensor<float> outputTensor = _engine.PeekOutput(_modelOutputName) as Tensor<float>;
+                        Tensor outputTensor = _engine.PeekOutput(_modelOutputName) as Tensor;
                         return outputTensor;
                   }
                   catch (System.Exception e)
@@ -153,11 +162,19 @@ namespace DuluxVisualizer
                         return null;
                   }
             }
+#else
+            public object Execute(object inputTensor)
+            {
+                  Debug.LogWarning("ModelLoader: Sentis not available for inference.");
+                  return null;
+            }
+#endif
 
             /// <summary>
             /// Создает входной тензор из текстуры
             /// </summary>
-            public Tensor<float> TextureToTensor(Texture2D texture)
+#if UNITY_SENTIS
+            public Tensor TextureToTensor(Texture2D texture)
             {
                   if (texture == null)
                   {
@@ -177,7 +194,7 @@ namespace DuluxVisualizer
                         if (!_useNCHW)
                               shape = new TensorShape(1, _inputHeight, _inputWidth, 3); // Batch, Height, Width, Channels (NHWC format)
 
-                        Tensor<float> tensor = new Tensor<float>(shape);
+                        var tensor = new TensorFloat(shape);
 
                         // Конвертируем текстуру в тензор
                         TextureConverter.ToTensor(texture, tensor, transform);
@@ -189,7 +206,15 @@ namespace DuluxVisualizer
                         return null;
                   }
             }
+#else
+            public object TextureToTensor(Texture2D texture)
+            {
+                  Debug.LogWarning("ModelLoader: Sentis not available for texture conversion.");
+                  return null;
+            }
+#endif
 
+#if UNITY_SENTIS
             /// <summary>
             /// Статический метод для загрузки модели напрямую из ModelAsset
             /// </summary>
@@ -294,5 +319,24 @@ namespace DuluxVisualizer
                         throw;
                   }
             }
+#else
+            /// <summary>
+            /// Статический метод для загрузки модели напрямую из ModelAsset
+            /// </summary>
+            public static object Load(ScriptableObject modelAsset)
+            {
+                  Debug.LogWarning("ModelLoader: Sentis not available for model loading.");
+                  return null;
+            }
+
+            /// <summary>
+            /// Loads a model from a file path (relative to StreamingAssets)
+            /// </summary>
+            public static object LoadFromStreamingAssets(string relativePath)
+            {
+                  Debug.LogWarning("ModelLoader: Sentis not available for model loading from StreamingAssets.");
+                  return null;
+            }
+#endif
       }
 }

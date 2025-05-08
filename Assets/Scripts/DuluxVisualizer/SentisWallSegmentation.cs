@@ -4,10 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.UI;
+#if UNITY_XR_CORE_UTILS_PRESENT
 using Unity.XR.CoreUtils;
+#endif
 
 namespace DuluxVisualizer
 {
@@ -77,13 +81,20 @@ namespace DuluxVisualizer
                   set { _outputRenderTexture = value; }
             }
 
-            // Приватные переменные
+            // Private variables
             private Texture2D cameraTexture;
             private Texture2D segmentationTexture;
+#if UNITY_SENTIS
             private Model runtimeModel;
             private Worker worker;
             private bool isProcessing;
             private Tensor inputTensor;
+#else
+            private bool isProcessing;
+            private ScriptableObject runtimeModel;
+            private object worker;
+            private object inputTensor;
+#endif
             private bool useDemoMode = false; // Используем демо-режим при ошибке модели
             private int errorCount = 0; // Счетчик ошибок нейросети
             private ModelAsset currentModelAsset; // Текущая используемая модель

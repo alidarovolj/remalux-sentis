@@ -1,5 +1,7 @@
 using UnityEngine;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
 
 namespace DuluxVisualizer
 {
@@ -11,7 +13,8 @@ namespace DuluxVisualizer
             /// <summary>
             /// Converts a texture to a tensor with specified dimensions and format
             /// </summary>
-            public static Tensor<float> TextureToTensor(Texture2D texture, int width, int height, bool useNCHW = true)
+#if UNITY_SENTIS
+            public static TensorFloat TextureToTensor(Texture2D texture, int width, int height, bool useNCHW = true)
             {
                   if (texture == null)
                         return null;
@@ -30,7 +33,7 @@ namespace DuluxVisualizer
                   }
 
                   // Create empty tensor with the right shape
-                  Tensor<float> tensor = new Tensor<float>(shape);
+                  TensorFloat tensor = new TensorFloat(shape);
 
                   // Create texture transform settings
                   var textureTransform = new TextureTransform()
@@ -46,7 +49,7 @@ namespace DuluxVisualizer
             /// <summary>
             /// Extracts a mask from a tensor
             /// </summary>
-            public static Texture2D CreateMaskFromTensor(Tensor<float> tensor, int width, int height, float threshold = 0.5f)
+            public static Texture2D CreateMaskFromTensor(TensorFloat tensor, int width, int height, float threshold = 0.5f)
             {
                   if (tensor == null)
                         return null;
@@ -54,7 +57,7 @@ namespace DuluxVisualizer
                   Texture2D mask = new Texture2D(width, height, TextureFormat.R8, false);
 
                   // Get raw data from tensor
-                  float[] tensorData = tensor.DownloadToArray();
+                  float[] tensorData = tensor.ToReadOnlySpan().ToArray();
                   Color[] pixels = new Color[width * height];
 
                   // Determine tensor dimensions
@@ -92,5 +95,34 @@ namespace DuluxVisualizer
                   mask.Apply();
                   return mask;
             }
+#else
+            public static object TextureToTensor(Texture2D texture, int width, int height, bool useNCHW = true)
+            {
+                  Debug.LogWarning("TextureConverterUtils: Unity Sentis is not available");
+                  return null;
+            }
+
+            public static Texture2D CreateMaskFromTensor(object tensor, int width, int height, float threshold = 0.5f)
+            {
+                  Debug.LogWarning("TextureConverterUtils: Unity Sentis is not available");
+                  // Create a simple gradient texture as a fallback
+                  Texture2D fallbackTexture = new Texture2D(width, height, TextureFormat.R8, false);
+                  Color[] pixels = new Color[width * height];
+                  
+                  for (int y = 0; y < height; y++)
+                  {
+                        for (int x = 0; x < width; x++)
+                        {
+                              float normalizedX = (float)x / width;
+                              float normalizedY = (float)y / height;
+                              pixels[y * width + x] = new Color(normalizedX, normalizedY, 0, 1);
+                        }
+                  }
+                  
+                  fallbackTexture.SetPixels(pixels);
+                  fallbackTexture.Apply();
+                  return fallbackTexture;
+            }
+#endif
       }
 }

@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
 using System.Collections.Generic;
 using System.Collections;
 using System;

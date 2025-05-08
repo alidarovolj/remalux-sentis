@@ -1,0 +1,26 @@
+<linker>
+  <!-- Preserve entire Sentis assembly -->
+  <assembly fullname="Unity.Sentis" preserve="all"/>
+  
+  <!-- Preserve core Sentis types -->
+  <type fullname="Unity.Sentis.ModelAsset" preserve="all"/>
+  <type fullname="Unity.Sentis.IWorker" preserve="all"/>
+  <type fullname="Unity.Sentis.Tensor" preserve="all"/>
+  <type fullname="Unity.Sentis.TensorFloat" preserve="all"/>
+  <type fullname="Unity.Sentis.TensorShape" preserve="all"/>
+  <type fullname="Unity.Sentis.BackendType" preserve="all"/>
+  <type fullname="Unity.Sentis.WorkerFactory" preserve="all"/>
+  <type fullname="Unity.Sentis.ModelLoader" preserve="all"/>
+  <type fullname="Unity.Sentis.TextureTransform" preserve="all"/>
+  <type fullname="Unity.Sentis.TextureConverter" preserve="all"/>
+  <type fullname="Unity.Sentis.TensorLayout" preserve="all"/>
+  
+  <!-- Preserve our custom shim types -->
+  <type fullname="DuluxVisualizer.IWorker" preserve="all"/>
+  <type fullname="DuluxVisualizer.Tensor" preserve="all"/>
+  <type fullname="DuluxVisualizer.TensorFloat" preserve="all"/>
+  <type fullname="DuluxVisualizer.TensorShape" preserve="all"/>
+  <type fullname="DuluxVisualizer.BackendType" preserve="all"/>
+  <type fullname="DuluxVisualizer.SentisShim" preserve="all"/>
+  <type fullname="DuluxVisualizer.SentisUtils" preserve="all"/>
+</linker> 

@@ -1,5 +1,7 @@
 using UnityEngine;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
 
 /// <summary>
 /// Вспомогательный класс для проверки наличия Unity Sentis
@@ -14,11 +16,25 @@ public static class SentisHelper
       {
             try
             {
-                  // Пробуем создать экземпляр класса из Sentis
-                  // Sentis 2.x API does not use WorkerFactory but instead we check BackendType directly
+#if UNITY_SENTIS
+                  // When Sentis is available, we can directly use its types
                   var backendSupported = BackendType.CPU;
                   Debug.Log($"Unity Sentis доступен. Поддерживаемые бэкенды: {backendSupported}");
                   return true;
+#else
+                  // Try using reflection to check if Sentis is available
+                  var sentisAssembly = System.AppDomain.CurrentDomain.GetAssemblies()
+                      .FirstOrDefault(a => a.GetName().Name == "Unity.Sentis");
+                      
+                  if (sentisAssembly == null)
+                  {
+                        Debug.LogWarning("Unity Sentis не найден");
+                        return false;
+                  }
+
+                  Debug.Log("Unity Sentis обнаружен через рефлексию");
+                  return true;
+#endif
             }
             catch (System.Exception ex)
             {

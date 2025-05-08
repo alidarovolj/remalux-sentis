@@ -2,8 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_SENTIS
 using Unity.Sentis;
+#endif
+#if UNITY_AR_FOUNDATION_PRESENT
 using UnityEngine.XR.ARFoundation;
+#endif
 using UnityEngine.UI;
 using DuluxVisualizer;
 
@@ -14,11 +18,34 @@ public class WallSegmentation : MonoBehaviour
 {
       [SerializeField] private SentisWallSegmentation sentisWallSegmentation;
 
+      // Private cache for real AR camera manager
+      private UnityEngine.XR.ARFoundation.ARCameraManager _realCameraManager;
+
       // Public properties for compatibility
-      public ARCameraManager cameraManager
+#if UNITY_AR_FOUNDATION_PRESENT
+      public UnityEngine.XR.ARFoundation.ARCameraManager cameraManager
+      {
+            get
+            {
+                  // Use cached version if possible
+                  if (_realCameraManager != null)
+                        return _realCameraManager;
+
+                  // Find ARCameraManager in the scene if it exists
+                  if (_realCameraManager == null && sentisWallSegmentation != null)
+                  {
+                        _realCameraManager = FindObjectOfType<UnityEngine.XR.ARFoundation.ARCameraManager>();
+                  }
+
+                  return _realCameraManager;
+            }
+      }
+#else
+      public DuluxVisualizer.ARCameraManager cameraManager
       {
             get { return sentisWallSegmentation != null ? sentisWallSegmentation.cameraManager : null; }
       }
+#endif
 
       public ModelAsset modelAsset
       {
@@ -128,11 +155,19 @@ public class WallSegmentation : MonoBehaviour
       /// <summary>
       /// Gets the percentage of plane covered by segmentation mask
       /// </summary>
-      public float GetPlaneCoverageByMask(ARPlane plane)
+#if UNITY_AR_FOUNDATION_PRESENT
+      public float GetPlaneCoverageByMask(UnityEngine.XR.ARFoundation.ARPlane plane)
       {
             // Default implementation
             return 0.5f;
       }
+#else
+      public float GetPlaneCoverageByMask(object plane)
+      {
+            // Default implementation
+            return 0.5f;
+      }
+#endif
 
       /// <summary>
       /// Updates status of planes based on segmentation

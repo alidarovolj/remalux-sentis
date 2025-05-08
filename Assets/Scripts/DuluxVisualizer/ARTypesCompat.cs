@@ -1,10 +1,17 @@
+#define USING_AR_FOUNDATION_FALLBACKS
+
 using UnityEngine;
+#if UNITY_AR_FOUNDATION_PRESENT
 using UnityEngine.XR.ARFoundation;
+#endif
 using System;
 
 // This file provides compatibility types for AR subsystems when the actual packages are not available
 namespace DuluxVisualizer
 {
+      // Only define these types when the real AR Foundation is not available AND when in the DuluxVisualizer namespace
+      // This prevents conflicts with ARFoundationFallbacks.cs which defines similar types in UnityEngine.XR.ARFoundation
+#if !UNITY_AR_FOUNDATION_PRESENT && !USING_AR_FOUNDATION_FALLBACKS
       // Define a compatible enum when Unity.XR.ARSubsystems is not available
       public enum PlaneDetectionMode
       {
@@ -130,24 +137,6 @@ namespace DuluxVisualizer
             }
       }
 
-      // Extension methods to help set detection mode without direct type references
-      public static class ARExtensionMethods
-      {
-            // Extension method to set plane detection mode to vertical
-            public static void SetVerticalDetectionMode(this ARPlaneManager planeManager)
-            {
-                  // Use reflection to set the property without direct reference
-                  var property = planeManager.GetType().GetProperty("requestedDetectionMode");
-                  if (property != null)
-                  {
-                        // We know the enum value for vertical is 2 in both ARSubsystems and our compatibility enum
-                        var enumType = property.PropertyType;
-                        var verticalValue = System.Enum.ToObject(enumType, 2); // 2 = Vertical
-                        property.SetValue(planeManager, verticalValue);
-                  }
-            }
-      }
-
       // XRCpuImage compatibility implementation
       public struct XRCpuImage : IDisposable
       {
@@ -187,4 +176,31 @@ namespace DuluxVisualizer
                   Debug.Log("Mock XRCpuImage.Convert called");
             }
       }
+#endif
+}
+
+// Extension methods to help set detection mode without direct type references
+public static class ARExtensionMethods
+{
+      // Extension method to set plane detection mode to vertical
+#if UNITY_AR_FOUNDATION_PRESENT
+      public static void SetVerticalDetectionMode(this UnityEngine.XR.ARFoundation.ARPlaneManager planeManager)
+      {
+            // Use direct type reference when available
+            planeManager.requestedDetectionMode = UnityEngine.XR.ARSubsystems.PlaneDetectionMode.Vertical;
+      }
+#else
+      public static void SetVerticalDetectionMode(this object planeManager)
+      {
+            // Use reflection to set the property without direct reference
+            var property = planeManager.GetType().GetProperty("requestedDetectionMode");
+            if (property != null)
+            {
+                  // We know the enum value for vertical is 2 in both ARSubsystems and our compatibility enum
+                  var enumType = property.PropertyType;
+                  var verticalValue = System.Enum.ToObject(enumType, 2); // 2 = Vertical
+                  property.SetValue(planeManager, verticalValue);
+            }
+      }
+#endif
 }

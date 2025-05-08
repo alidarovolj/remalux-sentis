@@ -152,4 +152,120 @@ If the wall detection isn't working properly:
 - `/Assets/Scripts/DuluxVisualizer/ARWallPaintingSceneCreator.cs`: Static utility class for scene creation
 - `/Assets/Scripts/DuluxVisualizer/WallPaintBlit.cs`: Post-processing for paint effect
 - `/Assets/Scripts/WallSegmentation.cs`: Wall segmentation using ML
-- `/Assets/Shaders/WallPaint.shader`: Shader for painting walls 
+- `/Assets/Shaders/WallPaint.shader`: Shader for painting walls
+
+# DuluxVisualizer Compilation Fix
+
+This directory contains scripts to help fix compilation errors in the DuluxVisualizer project, particularly related to Unity package dependencies.
+
+## Quick Fix
+
+The easiest way to fix all compilation issues is to:
+
+1. In Unity Editor, go to `Tools > DuluxVisualizer > Fix Compilation (Complete Solution)`
+2. Unity will apply all necessary fixes and trigger a recompilation
+3. If problems persist, try `Tools > DuluxVisualizer > Clean Library And Restart`
+
+## Additional Tools
+
+For more granular control, you can use these specialized tools:
+
+- **Fix Ambiguous AR References**: `Tools > DuluxVisualizer > Fix Ambiguous AR References`  
+  Adds proper namespace qualifiers to AR Foundation references in your code
+
+- **Fix Ambiguous Sentis References**: `Tools > DuluxVisualizer > Fix Ambiguous Sentis References`  
+  Adds proper namespace qualifiers to Unity.Sentis references in your code
+
+- **Fix Duplicate Type Definitions**: `Tools > DuluxVisualizer > Fix Duplicate Type Definitions`  
+  Resolves duplicate class definitions by adding namespaces or conditional compilation
+
+## How It Works
+
+The solution works by:
+
+1. Adding required define symbols (`UNITY_SENTIS`, `UNITY_AR_FOUNDATION_PRESENT`, etc.)
+2. Providing fallback implementations for package types when actual packages aren't installed
+3. Using conditional compilation to switch between real implementations and fallbacks
+4. Adding proper namespace qualifiers to resolve ambiguous type references
+5. Using conditional compilation for duplicate method definitions
+
+## Files and Their Purpose
+
+### Fallback Files:
+- **SentisFallbacks.cs**: Provides fallback types for Unity.Sentis when not installed
+- **ARFoundationFallbacks.cs**: Provides fallback types for AR Foundation when not installed
+- **TMProFallbacks.cs**: Provides fallback types for TextMeshPro when not installed
+- **BarracudaFallbacks.cs**: Provides fallback types for Unity.Barracuda when not installed
+
+### Editor Scripts:
+- **Editor/GlobalDefines.cs**: Adds required define symbols to the project
+- **Editor/ForceRecompile.cs**: Forces Unity to recompile the project
+- **Editor/PackageDetector.cs**: Detects installed packages and updates defines
+- **Editor/FixCompilation.cs**: GUI tool to apply various fixes
+- **Editor/FixARReferences.cs**: Adds proper namespace qualifiers to AR Foundation references
+- **Editor/FixSentisReferences.cs**: Adds proper namespace qualifiers to Unity.Sentis references
+- **Editor/FixDuplicateTypes.cs**: Fixes duplicate class and method definitions
+- **Editor/UnifiedCompilationFix.cs**: Central script that manages all fixes
+
+## Troubleshooting
+
+If you still experience compilation errors:
+
+1. Ensure all required packages are installed through the Package Manager:
+   - Unity Sentis
+   - AR Foundation
+   - TextMeshPro
+   - Barracuda (if needed)
+
+2. Check for duplicate type definitions (same class defined in multiple files)
+   - Use `Tools > DuluxVisualizer > Fix Duplicate Type Definitions` to resolve
+
+3. Look for ambiguous references (e.g., same type name in different namespaces)
+   - Use `Tools > DuluxVisualizer > Fix Ambiguous AR References` for AR Foundation types
+   - Use `Tools > DuluxVisualizer > Fix Ambiguous Sentis References` for Sentis types
+
+4. Try cleaning the Library folder and restarting Unity
+   - Use `Tools > DuluxVisualizer > Clean Library And Restart`
+
+## Manual Fixes
+
+If automatic fixes don't work, you may need to:
+
+1. Add proper namespace qualifiers where there are ambiguous references
+   ```csharp
+   // Instead of:
+   ARPlane plane;
+   
+   // Use:
+   UnityEngine.XR.ARFoundation.ARPlane plane;
+   ```
+
+2. Add conditional compilation directives around conflicting code
+   ```csharp
+   #if UNITY_AR_FOUNDATION_PRESENT
+   using UnityEngine.XR.ARFoundation;
+   #else
+   // Use fallbacks
+   #endif
+   ```
+
+3. Rename conflicting types
+   ```csharp
+   // Instead of:
+   public class WallSegmentation { }
+   
+   // Use:
+   public class WallSegmentationImpl { }
+   ```
+
+4. Move types to different namespaces
+   ```csharp
+   namespace DuluxVisualizer.Legacy
+   {
+       public class WallSegmentation { }
+   }
+   ```
+
+## Contact
+
+If you continue to have issues, please contact the project maintainer for assistance. 
