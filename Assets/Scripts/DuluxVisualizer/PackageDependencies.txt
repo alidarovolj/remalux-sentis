@@ -1,0 +1,25 @@
+# Required Packages for Dulux Visualizer Project
+
+## Core AR Packages
+com.unity.xr.arfoundation@4.2.7
+com.unity.xr.arkit@4.2.7 (iOS)
+com.unity.xr.arcore@4.2.7 (Android)
+
+## Neural Network
+com.unity.barracuda@2.0.0 (ML model inference)
+
+## UI and Rendering
+com.unity.ugui@1.0.0
+com.unity.render-pipelines.universal@10.10.0 (optional for better rendering)
+
+## Helper Packages
+com.unity.mathematics@1.2.6
+com.unity.xr.management@4.2.1
+
+## Test Dependencies
+NativeShare (for sharing screenshots) - available on Asset Store
+
+## Compatibility
+- Minimum Unity Version: 2021.3 LTS
+- Minimum iOS Version: 11.0 (ARKit)
+- Minimum Android Version: 7.0 (API Level 24, ARCore) 
